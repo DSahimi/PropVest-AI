@@ -1,0 +1,9 @@
+{
+  "name": "PropVest AI: Rental Analyzer",
+  "description": "A comprehensive real estate investment analysis tool powered by Gemini. Compare properties, calculate ROI, and use AI for market research, image visualization, and virtual tours.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
