@@ -1,9 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { Property } from '../types';
 import { calculateMetrics, formatCurrency, formatPercent } from '../utils/calculations';
-import { searchMarketData, analyzeFairOffer } from '../services/geminiService';
+import { searchMarketData, analyzeFairOffer, generatePropertyDescription } from '../services/geminiService';
 import { MediaStudio } from './MediaStudio';
-import { Calculator, Search, Info, DollarSign, Activity, ClipboardCheck, Loader2, RefreshCw, Camera, X, Wand2, ChevronLeft, ChevronRight, Bed, Bath, Square, ImageOff, Home } from 'lucide-react';
+import { Calculator, Search, Info, DollarSign, Activity, ClipboardCheck, Loader2, RefreshCw, Camera, X, Wand2, ChevronLeft, ChevronRight, Bed, Bath, Square, ImageOff, Home, Sparkles } from 'lucide-react';
 
 interface PropertyDetailProps {
   property: Property;
@@ -16,6 +16,7 @@ export const PropertyDetail: React.FC<PropertyDetailProps> = ({ property, onUpda
   const [searchResult, setSearchResult] = useState<{ text: string; sources: { title: string; uri: string }[] } | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [isAnalyzingOffer, setIsAnalyzingOffer] = useState(false);
+  const [isGeneratingDesc, setIsGeneratingDesc] = useState(false);
   
   // Gallery State
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
@@ -51,6 +52,18 @@ export const PropertyDetail: React.FC<PropertyDetailProps> = ({ property, onUpda
       console.error(e);
     } finally {
       setIsAnalyzingOffer(false);
+    }
+  };
+
+  const handleGenerateDescription = async () => {
+    setIsGeneratingDesc(true);
+    try {
+      const desc = await generatePropertyDescription(property);
+      onUpdate({ ...property, aiDescription: desc });
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsGeneratingDesc(false);
     }
   };
 
@@ -155,6 +168,39 @@ export const PropertyDetail: React.FC<PropertyDetailProps> = ({ property, onUpda
                     <p className={`text-xl font-mono font-bold ${m.color}`}>{m.value}</p>
                 </div>
             ))}
+        </section>
+
+        {/* Property Highlights Section */}
+        <section className="bg-white rounded-lg border border-slate-100 p-4 shadow-sm relative group">
+             <div className="flex justify-between items-start mb-2">
+                 <h3 className="font-semibold text-slate-700 flex items-center gap-2 text-sm uppercase tracking-wide">
+                    <Sparkles size={16} className="text-indigo-500" /> Property Highlights
+                 </h3>
+                 <button 
+                    onClick={handleGenerateDescription}
+                    disabled={isGeneratingDesc}
+                    className="text-xs flex items-center gap-1 text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2 py-1 rounded transition-colors disabled:opacity-50"
+                 >
+                    {isGeneratingDesc ? <Loader2 size={12} className="animate-spin"/> : <RefreshCw size={12} />}
+                    {property.aiDescription ? 'Regenerate' : 'Generate AI Description'}
+                 </button>
+             </div>
+             
+             <div className="text-slate-600 text-sm leading-relaxed">
+                {isGeneratingDesc ? (
+                    <div className="space-y-2 animate-pulse">
+                        <div className="h-2 bg-slate-100 rounded w-3/4"></div>
+                        <div className="h-2 bg-slate-100 rounded w-full"></div>
+                        <div className="h-2 bg-slate-100 rounded w-5/6"></div>
+                    </div>
+                ) : property.aiDescription ? (
+                    <p>{property.aiDescription}</p>
+                ) : (
+                    <p className="text-slate-400 italic">
+                        Click generate to have Gemini analyze this property and write a listing description.
+                    </p>
+                )}
+             </div>
         </section>
 
         <hr className="border-slate-100" />

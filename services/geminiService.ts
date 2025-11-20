@@ -273,8 +273,12 @@ export const editPropertyImage = async (base64Image: string, prompt: string) => 
     });
 
     const parts = response.candidates?.[0]?.content?.parts;
-    if (parts && parts[0].inlineData) {
-      return `data:image/png;base64,${parts[0].inlineData.data}`;
+    if (parts) {
+      for (const part of parts) {
+        if (part.inlineData && part.inlineData.data) {
+          return `data:image/png;base64,${part.inlineData.data}`;
+        }
+      }
     }
     throw new Error("No image generated");
   } catch (error) {
@@ -317,6 +321,38 @@ export const generatePropertyVideo = async (base64Image: string) => {
 
   } catch (error) {
     console.error("Video gen error:", error);
+    throw error;
+  }
+};
+
+// --- Description Generation ---
+export const generatePropertyDescription = async (property: any) => {
+  const ai = getAI();
+  try {
+    const prompt = `
+      Role: Real Estate Copywriter.
+      Task: Write a compelling, attractive listing description for this investment property.
+      
+      Details:
+      Address: ${property.address}
+      Price: $${property.price}
+      Specs: ${property.bedrooms} Beds, ${property.bathrooms} Baths, ${property.sqft} SqFt.
+      
+      Focus on:
+      1. The investment potential (cash flow, rental appeal).
+      2. The lifestyle/features based on typical homes in this area (infer from address if needed).
+      
+      Format: Professional, engaging, roughly 100-150 words. No markdown.
+    `;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+    });
+
+    return response.text;
+  } catch (error) {
+    console.error("Description gen error:", error);
     throw error;
   }
 };
